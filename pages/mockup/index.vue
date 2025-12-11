@@ -430,6 +430,29 @@ function protoChange(proto) {
   }
 }
 
+function getImageStyle(proto) {
+  const scale = proto.imageScale !== undefined ? proto.imageScale : 1
+  const offsetX = proto.imageOffsetX !== undefined ? proto.imageOffsetX : 0
+  const offsetY = proto.imageOffsetY !== undefined ? proto.imageOffsetY : 0
+  
+  const transforms = []
+  if (scale !== 1) {
+    transforms.push(`scale(${scale})`)
+  }
+  if (offsetX !== 0 || offsetY !== 0) {
+    transforms.push(`translate(${offsetX}px, ${offsetY}px)`)
+  }
+  
+  if (transforms.length === 0) {
+    return {}
+  }
+  
+  return {
+    transform: transforms.join(' '),
+    transformOrigin: 'center'
+  }
+}
+
 let defaultSystemColor = "#ffffff"
 let defaultDateTimeColor = "#ffffff"
 let protoTypeList = ref([
@@ -460,7 +483,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -502,7 +528,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -540,7 +569,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           },
           {
             type: 'iphoneType',
@@ -562,7 +594,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -605,7 +640,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           },
           {
             type: 'iphoneType',
@@ -632,7 +670,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -675,7 +716,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -725,7 +769,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -769,7 +816,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -813,7 +863,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -857,7 +910,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -902,7 +958,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           }
         ],
         background: {
@@ -918,6 +977,64 @@ let protoTypeList = ref([
           },
         }
       },
+      // ========== 扩展iPhone模板示例 ==========
+      // 要添加新的iPhone模板，请按照以下格式添加：
+      // {
+      //   defaultProtoUrl: yourPreviewImage,  // 预览图路径，需要在文件顶部定义
+      //   exampleName: t("mockup.yourTemplateName"),  // 模板名称，需要在i18n中添加
+      //   protoList: [
+      //     {
+      //       type: 'iphoneType',
+      //       name: 'iPhone',  // 或自定义名称，如 'iPhone1', '左边iPhone' 等
+      //       frame: true,     // 是否显示边框
+      //       smartIsLand: true,  // 是否显示灵动岛
+      //       style: {
+      //         width: '426px',
+      //         height: '877px',
+      //         // transform 控制位置、旋转、缩放
+      //         // rotate(角度deg) - 旋转角度
+      //         // translateX(X偏移px) - 水平偏移
+      //         // translateY(Y偏移px) - 垂直偏移
+      //         // scaleX(X缩放) - 水平缩放
+      //         // scaleY(Y缩放) - 垂直缩放
+      //         transform: 'rotate(0deg) translateX(0px) translateY(0px) scaleX(1.0) scaleY(1.0) perspective(none) skewX(0deg) skewY(0deg) rotateX(0deg) rotateY(0deg) rotateZ(0deg)',
+      //         // 可选：添加阴影效果
+      //         // filter: 'drop-shadow(rgba(0, 0, 0, 0.25) -10px 10px 10px)',
+      //       },
+      //       paperStyleMethod: (proto) => {
+      //         // 壁纸样式，通常保持标准值
+      //         return "width: calc(100% - 36px);height: calc(100% - 32px); border-radius: 50px;position: absolute;left: 18px;top: 16px;"
+      //       },
+      //       paperChatStyle: {
+      //         // 聊天界面样式（如果使用聊天模式）
+      //         position: 'absolute',
+      //         width: '390px',
+      //         height: '653.12px',
+      //         top: '115px',
+      //         left: '18px',
+      //       },
+      //       screenType: screenOptions['iphoneType'][0],  // 0=锁屏, 1=桌面, 2=仅样机
+      //       selectedTime: new Date(),
+      //       selectedDate: new Date(),
+      //       systemColor: defaultSystemColor,
+      //       dateTimeColor: defaultDateTimeColor
+      //     }
+      //     // 如果需要多个iPhone，可以在这里继续添加更多对象
+      //   ],
+      //   background: {
+      //     type: backgroundOptions[0],
+      //     needBlur: true,        // 是否需要模糊效果
+      //     autoUpdate: true,      // 是否自动更新背景
+      //     // 可选：自定义默认背景图
+      //     // defaultBackgroundUrl: yourBackgroundImage,
+      //     backgroundImageStyle: () => {
+      //       return {
+      //         display: !selectedProto.value.background.needBlur ? 'block' : 'none',
+      //       }
+      //     },
+      //   }
+      // },
+      // ==========================================
     ]
   },
   {
@@ -1299,7 +1416,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           },
           {
             type: 'ipadType',
@@ -1369,7 +1489,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           },
           {
             type: 'ipadType',
@@ -1522,7 +1645,10 @@ let protoTypeList = ref([
             selectedTime: new Date(),
             selectedDate: new Date(),
             systemColor: defaultSystemColor,
-            dateTimeColor: defaultDateTimeColor
+            dateTimeColor: defaultDateTimeColor,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0
           },
           {
             type: 'iphoneType',
@@ -1915,7 +2041,7 @@ onMounted(() => {
                   <!-- 壁纸内容 -->
                   <div v-if="['lockScreen', 'desktopScreen', 'onlyMockUp'].includes(proto.screenType)" class="paper"
                     :style="proto.paperStyleMethod(proto)">
-                    <img ref="paperImage" class="image" :src="paperUrl"></img>
+                    <img ref="paperImage" class="image" :src="paperUrl" :style="getImageStyle(proto)"></img>
 
                     <!-- 平板/电脑界面的组件 -->
                     <div
@@ -2615,6 +2741,24 @@ onMounted(() => {
                 </div>
               </template> -->
               </el-upload>
+            </div>
+            <div v-if="['lockScreen', 'desktopScreen', 'onlyMockUp'].includes(proto.screenType)" class="image-scale-setting">
+              <div>{{ t("mockup.imageScale") }}</div>
+              <el-slider v-model="proto.imageScale" :min="0.1" :max="3" :step="0.1" :show-tooltip="true" />
+              <div class="scale-value">{{ Math.round((proto.imageScale || 1) * 100) }}%</div>
+            </div>
+            <div v-if="['lockScreen', 'desktopScreen', 'onlyMockUp'].includes(proto.screenType)" class="image-position-setting">
+              <div>{{ t("mockup.imagePosition") }}</div>
+              <div class="position-controls">
+                <div class="position-item">
+                  <div class="position-label">X: {{ proto.imageOffsetX || 0 }}px</div>
+                  <el-slider v-model="proto.imageOffsetX" :min="-200" :max="200" :step="1" :show-tooltip="false" />
+                </div>
+                <div class="position-item">
+                  <div class="position-label">Y: {{ proto.imageOffsetY || 0 }}px</div>
+                  <el-slider v-model="proto.imageOffsetY" :min="-200" :max="200" :step="1" :show-tooltip="false" />
+                </div>
+              </div>
             </div>
             <div
               v-if="proto.screenType == 'lockScreen' || (proto.type == 'ipadType' && proto.screenType == 'desktopScreen')"
@@ -3339,6 +3483,43 @@ video {
             }
           }
 
+        }
+      }
+    }
+
+    .image-scale-setting {
+      padding-top: 12px;
+
+      > div:first-child {
+        margin-bottom: 8px;
+      }
+
+      .scale-value {
+        text-align: center;
+        margin-top: 8px;
+        font-size: 14px;
+        color: #606266;
+      }
+    }
+
+    .image-position-setting {
+      padding-top: 12px;
+
+      > div:first-child {
+        margin-bottom: 8px;
+      }
+
+      .position-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .position-item {
+        .position-label {
+          font-size: 12px;
+          color: #606266;
+          margin-bottom: 4px;
         }
       }
     }

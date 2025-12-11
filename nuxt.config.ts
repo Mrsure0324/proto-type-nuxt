@@ -2,7 +2,7 @@
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-console.log("region:",process.env.region)
+console.log("region:", process.env.region)
 export default defineNuxtConfig({
   modules: [
     '@nuxtjs/i18n',
@@ -32,7 +32,7 @@ export default defineNuxtConfig({
         file: 'zh.json',
       },
     ],
-    defaultLocale: 'en',
+    defaultLocale: 'zh',
     detectBrowserLanguage: false, // ✅ 正确：禁用浏览器语言检测,否则默认是浏览器的语言
     lazy: true, // 懒加载语言包
     langDir: 'locales/', // 存放语言文件的目录
@@ -61,5 +61,5 @@ export default defineNuxtConfig({
   // },
   compatibilityDate: '2025-05-15',
   devtools: { enabled: false },
-  css: ['element-plus/dist/index.css','@/assets/css/tailwind.css', '@/assets/css/_variables.scss', '@/assets/css/font.css'],
+  css: ['element-plus/dist/index.css', '@/assets/css/tailwind.css', '@/assets/css/_variables.scss', '@/assets/css/font.css'],
 })

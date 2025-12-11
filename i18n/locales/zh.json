@@ -1,6 +1,6 @@
 {
   "mockup": {
-    "designByWho": "Design by 小仙女",
+    "designByWho": "Design by Pixel Tide",
     "familyBucket": "全家桶",
     "defaultOne": "默认1",
     "defaultTwo": "默认2",
@@ -34,7 +34,7 @@
     "widgetStyleTwo": "样式2",
     "border": "边框",
     "dynamicIsland": "灵动岛",
-    "fairy": "小仙女的",
+    "fairy": "小可爱的",
     "background": "背景",
     "blur": "模糊",
     "automaticallySwitch": "自动更换",
@@ -62,7 +62,10 @@
     "batchExportTitle": "批量导出 - 多张图片使用同一个模板",
     "clearImages": "清空图片",
     "preview": "预览",
-    "cancel": "取消"
+    "cancel": "取消",
+    "imageScale": "图片缩放",
+    "imagePosition": "图片位置",
+    "originalWallpaper": "原图展示"
   },
   "head": {
     "title": "壁纸样机生成器 - 手机、平板、电脑样机模板工具",

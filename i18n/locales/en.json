@@ -1,6 +1,6 @@
 {
   "mockup": {
-    "designByWho": "Design by Angel",
+    "designByWho": "Design by Pixel Tide",
     "familyBucket": "Family Bucket",
     "defaultOne": "Default one",
     "defaultTwo": "Default two",
@@ -62,7 +62,10 @@
     "batchExportTitle": "Batch Export - Multiple Images Using the Same Template",
     "clearImages": "Reset image",
     "preview": "Preview",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "imageScale": "Image Scale",
+    "imagePosition": "Image Position",
+    "originalWallpaper": "Original Wallpaper"
   },
   "head": {
     "title": "Wallpaper Mockup Generator - Templates for Mobile, Tablet, and Computer",
