@@ -56,6 +56,7 @@ onMounted(() => {
       </h1>
       <div class="flex space-x-4 ml-2 mt-8 justify-center md:justify-start">
         <Button size="lg" text="Get started" :to="localePath('/mockup')" class="font-extrabold" />
+        <Button size="lg" text="Watermark maker" :to="localePath('/watermark')" variant="outline" />
       </div>
 
       <section class="py-10 text-card-foreground">
