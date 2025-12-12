@@ -13,6 +13,8 @@ const fileList = ref<UploadFile[]>([])
 const processing = ref(false)
 const previewLoading = ref(false)
 const lastSize = ref<{ w: number; h: number } | null>(null)
+const currentIndex = ref(0)
+const previewCache = ref<Record<string, { url: string; width: number; height: number }>>({})
 
 const watermark = reactive({
   text: '像素潮汐  |  PIXEL TIDE  |  DESIGN STUDIO',
@@ -38,6 +40,8 @@ const handleChange = (uploadFile: any) => {
   const url = URL.createObjectURL(raw)
   fileList.value = [{ name: raw.name, url, raw }]
   previewUrl.value = ''
+  currentIndex.value = 0
+  previewCache.value = {}
   updatePreviewDebounced()
 }
 
@@ -48,6 +52,8 @@ const handleMultiple = (uploadFiles: any[]) => {
     raw: f.raw,
   }))
   previewUrl.value = ''
+  currentIndex.value = 0
+  previewCache.value = {}
   updatePreviewDebounced()
 }
 
@@ -140,9 +146,21 @@ const updatePreview = async () => {
   }
   previewLoading.value = true
   try {
-    const { blob, width, height } = await drawWatermark(fileList.value[0].raw)
-    previewUrl.value = URL.createObjectURL(blob)
-    lastSize.value = { w: width, h: height }
+    const target = fileList.value[currentIndex.value] || fileList.value[0]
+    const cacheKey = target.name
+    if (previewCache.value[cacheKey]) {
+      previewUrl.value = previewCache.value[cacheKey].url
+      lastSize.value = {
+        w: previewCache.value[cacheKey].width,
+        h: previewCache.value[cacheKey].height,
+      }
+    } else {
+      const { blob, width, height } = await drawWatermark(target.raw)
+      const url = URL.createObjectURL(blob)
+      previewCache.value[cacheKey] = { url, width, height }
+      previewUrl.value = url
+      lastSize.value = { w: width, h: height }
+    }
   } catch (e) {
     console.error(e)
     ElMessage.error('预览生成失败')
@@ -166,6 +184,15 @@ const preview = async () => {
   if (!fileList.value.length) return ElMessage.warning('请先上传图片')
   await updatePreview()
   ElMessage.success('预览生成完成')
+}
+
+const clearAll = () => {
+  fileList.value = []
+  previewUrl.value = ''
+  lastSize.value = null
+  previewCache.value = {}
+  currentIndex.value = 0
+  ElMessage.success('已清空图片')
 }
 
 watch(
@@ -237,7 +264,7 @@ const batchExport = async () => {
           <div class="form-item two-col">
             <div>
               <div class="label">字号</div>
-              <el-slider v-model="watermark.fontSize" :min="12" :max="100" />
+              <el-slider v-model="watermark.fontSize" :min="10" :max="200" />
             </div>
             <div>
               <div class="label">透明度</div>
@@ -248,17 +275,17 @@ const batchExport = async () => {
             <div class="form-item two-col">
               <div>
                 <div class="label">间距 X</div>
-                <el-slider v-model="watermark.gapX" :min="80" :max="400" />
+                <el-slider v-model="watermark.gapX" :min="40" :max="800" />
               </div>
               <div>
                 <div class="label">间距 Y</div>
-                <el-slider v-model="watermark.gapY" :min="80" :max="400" />
+                <el-slider v-model="watermark.gapY" :min="40" :max="800" />
               </div>
             </div>
             <div class="form-item two-col">
               <div>
                 <div class="label">角度</div>
-                <el-slider v-model="watermark.angle" :min="-90" :max="90" />
+                <el-slider v-model="watermark.angle" :min="-180" :max="180" />
               </div>
               <div>
                 <div class="label">颜色</div>
@@ -270,11 +297,11 @@ const batchExport = async () => {
             <div class="form-item two-col">
               <div>
                 <div class="label">偏移 X</div>
-                <el-slider v-model="watermark.offsetX" :min="-400" :max="400" />
+                <el-slider v-model="watermark.offsetX" :min="-800" :max="800" />
               </div>
               <div>
                 <div class="label">偏移 Y</div>
-                <el-slider v-model="watermark.offsetY" :min="-400" :max="400" />
+                <el-slider v-model="watermark.offsetY" :min="-800" :max="800" />
               </div>
             </div>
             <div class="form-item two-col">
@@ -292,7 +319,7 @@ const batchExport = async () => {
           <div class="section-title export-title">导出设置</div>
           <div class="form-item">
             <div class="label">缩放倍数（相对原图）</div>
-            <el-slider v-model="watermark.outputScale" :min="0.1" :max="2" :step="0.05" />
+            <el-slider v-model="watermark.outputScale" :min="0.1" :max="3" :step="0.05" />
           </div>
           <div class="form-item">
             <el-switch v-model="watermark.limit1080p" active-text="限制在 1080p 以内" inactive-text="不限制" />
@@ -306,6 +333,7 @@ const batchExport = async () => {
         <div class="actions">
           <el-button type="primary" :loading="processing" @click="preview">生成预览</el-button>
           <el-button type="success" :loading="processing" @click="batchExport">批量导出</el-button>
+          <el-button type="warning" plain @click="clearAll">清空图片</el-button>
         </div>
       </div>
 
@@ -314,13 +342,28 @@ const batchExport = async () => {
         <div class="preview">
           <div v-if="previewUrl" class="preview-img">
             <img :src="previewUrl" alt="preview" />
+            <div class="preview-nav" v-if="fileList.length > 1">
+              <el-button size="small" @click="currentIndex = (currentIndex - 1 + fileList.length) % fileList.length; updatePreview()">
+                上一张
+              </el-button>
+              <div class="preview-counter">{{ currentIndex + 1 }} / {{ fileList.length }}</div>
+              <el-button size="small" @click="currentIndex = (currentIndex + 1) % fileList.length; updatePreview()">
+                下一张
+              </el-button>
+            </div>
           </div>
           <div v-else class="placeholder">请上传图片并点击生成预览</div>
         </div>
         <div class="list" v-if="fileList.length > 0">
           <div class="list-title">已选文件（{{ fileList.length }}）</div>
           <div class="list-items">
-            <div v-for="item in fileList" :key="item.url" class="file-item">
+            <div
+              v-for="(item, idx) in fileList"
+              :key="item.url"
+              class="file-item"
+              :class="{ active: idx === currentIndex }"
+              @click="currentIndex = idx; updatePreview()"
+            >
               <div class="name">{{ item.name }}</div>
             </div>
           </div>
@@ -453,6 +496,29 @@ const batchExport = async () => {
   border-radius: 8px;
   background: #f2f3f5;
   font-size: 13px;
+}
+
+.file-item {
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.file-item.active {
+  border-color: #409eff;
+  background: #ecf5ff;
+}
+
+.preview-nav {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.preview-counter {
+  font-size: 12px;
+  color: #606266;
 }
 </style>
 
