@@ -18,7 +18,8 @@ const previewCache = ref<Record<string, { url: string; width: number; height: nu
 
 const watermark = reactive({
   text: '像素潮汐  |  PIXEL TIDE  |  DESIGN STUDIO',
-  fontSize: 100,
+  fontSize: 2, // 相对模式下的默认字号2%
+  sizeMode: 'relative', // 默认设为相对图片大小模式
   color: '#ffffff',
   opacity: 0.6,
   angle: -30,
@@ -26,7 +27,7 @@ const watermark = reactive({
   gapY: 130,
   tile: false,
   offsetX: 0,
-  offsetY: -250,
+  offsetY: -3, // 相对模式下的默认偏移Y -3%
   // 导出设置
   outputScale: 2, // 0.5倍导出
   limit1080p: true, // 限制在1080p以内
@@ -90,7 +91,18 @@ const drawWatermark = async (
   ctx.save()
   ctx.globalAlpha = watermark.opacity
   ctx.fillStyle = watermark.color
-  const fontPx = watermark.fontSize * scale
+
+  // 根据模式计算字体大小
+  let fontPx: number
+  if (watermark.sizeMode === 'relative') {
+    // 相对模式：fontSize 表示相对于图片最大边长的百分比
+    const maxDimension = Math.max(targetW, targetH)
+    fontPx = (watermark.fontSize / 100) * maxDimension
+  } else {
+    // 绝对模式：fontSize 是固定像素值
+    fontPx = watermark.fontSize * scale
+  }
+
   ctx.font = `${fontPx}px sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -101,8 +113,18 @@ const drawWatermark = async (
     ctx.rotate((watermark.angle * Math.PI) / 180)
     ctx.translate(-targetW / 2, -targetH / 2)
 
-    const gapX = watermark.gapX * scale
-    const gapY = watermark.gapY * scale
+    // 根据模式计算间距
+    let gapX: number, gapY: number
+    if (watermark.sizeMode === 'relative') {
+      // 相对模式：gapX/gapY 表示相对于图片最大边长的百分比
+      const maxDimension = Math.max(targetW, targetH)
+      gapX = (watermark.gapX / 100) * maxDimension
+      gapY = (watermark.gapY / 100) * maxDimension
+    } else {
+      // 绝对模式：gapX/gapY 是固定像素值
+      gapX = watermark.gapX * scale
+      gapY = watermark.gapY * scale
+    }
     const startX = -targetW
     const endX = targetW * 2
     const startY = -targetH
@@ -114,9 +136,22 @@ const drawWatermark = async (
     }
   } else {
     // 单行水印：默认靠下居中，可微调偏移
-    const padding = 60 * scale
-    const x = targetW / 2 + watermark.offsetX * scale
-    const y = targetH - padding + watermark.offsetY * scale
+    let padding: number, offsetX: number, offsetY: number
+    if (watermark.sizeMode === 'relative') {
+      // 相对模式：偏移表示相对于图片尺寸的百分比
+      const maxDimension = Math.max(targetW, targetH)
+      padding = (3 / 100) * maxDimension // 3% 作为底部边距
+      offsetX = (watermark.offsetX / 100) * targetW
+      offsetY = (watermark.offsetY / 100) * targetH
+    } else {
+      // 绝对模式：偏移是固定像素值
+      padding = 60 * scale
+      offsetX = watermark.offsetX * scale
+      offsetY = watermark.offsetY * scale
+    }
+
+    const x = targetW / 2 + offsetX
+    const y = targetH - padding + offsetY
     ctx.fillText(watermark.text, x, y)
   }
 
@@ -147,7 +182,8 @@ const updatePreview = async () => {
   previewLoading.value = true
   try {
     const target = fileList.value[currentIndex.value] || fileList.value[0]
-    const cacheKey = target.name
+    // 缓存key包含水印配置，确保配置变化时重新生成
+    const cacheKey = `${target.name}_${JSON.stringify(watermark)}`
     if (previewCache.value[cacheKey]) {
       previewUrl.value = previewCache.value[cacheKey].url
       lastSize.value = {
@@ -160,6 +196,8 @@ const updatePreview = async () => {
       previewCache.value[cacheKey] = { url, width, height }
       previewUrl.value = url
       lastSize.value = { w: width, h: height }
+      // 限制缓存大小
+      limitCacheSize()
     }
   } catch (e) {
     console.error(e)
@@ -186,11 +224,32 @@ const preview = async () => {
   ElMessage.success('预览生成完成')
 }
 
+// 清理预览缓存中的URL对象以避免内存泄漏
+const clearPreviewCache = () => {
+  for (const key in previewCache.value) {
+    URL.revokeObjectURL(previewCache.value[key].url)
+  }
+  previewCache.value = {}
+}
+
+// 限制缓存大小，避免内存泄漏
+const limitCacheSize = (maxSize = 10) => {
+  const keys = Object.keys(previewCache.value)
+  if (keys.length > maxSize) {
+    // 保留最新的缓存条目
+    const toRemove = keys.slice(0, keys.length - maxSize)
+    toRemove.forEach(key => {
+      URL.revokeObjectURL(previewCache.value[key].url)
+      delete previewCache.value[key]
+    })
+  }
+}
+
 const clearAll = () => {
   fileList.value = []
   previewUrl.value = ''
   lastSize.value = null
-  previewCache.value = {}
+  clearPreviewCache()
   currentIndex.value = 0
   ElMessage.success('已清空图片')
 }
@@ -261,10 +320,27 @@ const batchExport = async () => {
             <div class="label">模式</div>
             <el-switch v-model="watermark.tile" active-text="平铺" inactive-text="单行" />
           </div>
+          <div class="form-item">
+            <div class="label">大小模式</div>
+            <el-radio-group v-model="watermark.sizeMode">
+              <el-radio label="absolute">绝对像素</el-radio>
+              <el-radio label="relative">相对图片大小</el-radio>
+            </el-radio-group>
+          </div>
           <div class="form-item two-col">
             <div>
-              <div class="label">字号</div>
-              <el-slider v-model="watermark.fontSize" :min="10" :max="200" />
+              <div class="label">
+                字号
+                <span v-if="watermark.sizeMode === 'relative'" class="hint-text">(%)</span>
+                <span v-else class="hint-text">(px)</span>
+              </div>
+              <el-slider
+                v-model="watermark.fontSize"
+                :min="watermark.sizeMode === 'relative' ? 0.1 : 10"
+                :max="watermark.sizeMode === 'relative' ? 10 : 200"
+                :step="watermark.sizeMode === 'relative' ? 0.1 : 1"
+              />
+              <div class="hint">{{ watermark.sizeMode === 'relative' ? '相对于图片最大边长的百分比' : '固定像素大小' }}</div>
             </div>
             <div>
               <div class="label">透明度</div>
@@ -274,12 +350,30 @@ const batchExport = async () => {
           <template v-if="watermark.tile">
             <div class="form-item two-col">
               <div>
-                <div class="label">间距 X</div>
-                <el-slider v-model="watermark.gapX" :min="40" :max="800" />
+                <div class="label">
+                  间距 X
+                  <span v-if="watermark.sizeMode === 'relative'" class="hint-text">(%)</span>
+                  <span v-else class="hint-text">(px)</span>
+                </div>
+                <el-slider
+                  v-model="watermark.gapX"
+                  :min="watermark.sizeMode === 'relative' ? 1 : 40"
+                  :max="watermark.sizeMode === 'relative' ? 50 : 800"
+                  :step="watermark.sizeMode === 'relative' ? 0.5 : 10"
+                />
               </div>
               <div>
-                <div class="label">间距 Y</div>
-                <el-slider v-model="watermark.gapY" :min="40" :max="800" />
+                <div class="label">
+                  间距 Y
+                  <span v-if="watermark.sizeMode === 'relative'" class="hint-text">(%)</span>
+                  <span v-else class="hint-text">(px)</span>
+                </div>
+                <el-slider
+                  v-model="watermark.gapY"
+                  :min="watermark.sizeMode === 'relative' ? 1 : 40"
+                  :max="watermark.sizeMode === 'relative' ? 50 : 800"
+                  :step="watermark.sizeMode === 'relative' ? 0.5 : 10"
+                />
               </div>
             </div>
             <div class="form-item two-col">
@@ -296,12 +390,30 @@ const batchExport = async () => {
           <template v-else>
             <div class="form-item two-col">
               <div>
-                <div class="label">偏移 X</div>
-                <el-slider v-model="watermark.offsetX" :min="-800" :max="800" />
+                <div class="label">
+                  偏移 X
+                  <span v-if="watermark.sizeMode === 'relative'" class="hint-text">(%)</span>
+                  <span v-else class="hint-text">(px)</span>
+                </div>
+                <el-slider
+                  v-model="watermark.offsetX"
+                  :min="watermark.sizeMode === 'relative' ? -50 : -800"
+                  :max="watermark.sizeMode === 'relative' ? 50 : 800"
+                  :step="watermark.sizeMode === 'relative' ? 1 : 10"
+                />
               </div>
               <div>
-                <div class="label">偏移 Y</div>
-                <el-slider v-model="watermark.offsetY" :min="-800" :max="800" />
+                <div class="label">
+                  偏移 Y
+                  <span v-if="watermark.sizeMode === 'relative'" class="hint-text">(%)</span>
+                  <span v-else class="hint-text">(px)</span>
+                </div>
+                <el-slider
+                  v-model="watermark.offsetY"
+                  :min="watermark.sizeMode === 'relative' ? -50 : -800"
+                  :max="watermark.sizeMode === 'relative' ? 50 : 800"
+                  :step="watermark.sizeMode === 'relative' ? 1 : 10"
+                />
               </div>
             </div>
             <div class="form-item two-col">
@@ -432,6 +544,12 @@ const batchExport = async () => {
   margin-top: 4px;
   font-size: 12px;
   color: #909399;
+}
+
+.hint-text {
+  font-size: 12px;
+  color: #606266;
+  font-weight: normal;
 }
 
 .export-title {
